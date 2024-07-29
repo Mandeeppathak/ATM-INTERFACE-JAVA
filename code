@@ -1,0 +1,158 @@
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Scanner;
+
+class Account {
+    private String userId;
+    private String pin;
+    private double balance;
+    private ArrayList<String> transactions;
+
+    public Account(String userId, String pin, double balance) {
+        this.userId = userId;
+        this.pin = pin;
+        this.balance = balance;
+        this.transactions = new ArrayList<>();
+    }
+
+    public boolean checkPin(String pin) {
+        return this.pin.equals(pin);
+    }
+
+    public double deposit(double amount) {
+        this.balance += amount;
+        this.transactions.add("Deposit: " + amount);
+        return this.balance;
+    }
+
+    public String withdraw(double amount) {
+        if (amount > this.balance) {
+            return "Insufficient balance";
+        } else {
+            this.balance -= amount;
+            this.transactions.add("Withdraw: " + amount);
+            return "New balance: " + this.balance;
+        }
+    }
+
+    public String getTransactionHistory() {
+        if (this.transactions.isEmpty()) {
+            return "No transactions available";
+        } else {
+            StringBuilder history = new StringBuilder();
+            for (String transaction : transactions) {
+                history.append(transaction).append("\n");
+            }
+            return history.toString();
+        }
+    }
+
+    public String transfer(Account targetAccount, double amount) {
+        if (amount > this.balance) {
+            return "Insufficient balance";
+        } else {
+            this.withdraw(amount);
+            targetAccount.deposit(amount);
+            this.transactions.add("Transfer: " + amount + " to " + targetAccount.getUserId());
+            return "New balance: " + this.balance;
+        }
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+}
+
+class ATM {
+    private HashMap<String, Account> accounts;
+
+    public ATM() {
+        this.accounts = new HashMap<>();
+    }
+
+    public void createAccount(String userId, String pin, double balance) {
+        accounts.put(userId, new Account(userId, pin, balance));
+    }
+
+    public Account accessAccount(String userId, String pin) {
+        if (accounts.containsKey(userId) && accounts.get(userId).checkPin(pin)) {
+            return accounts.get(userId);
+        } else {
+            return null;
+        }
+    }
+
+    public void run() {
+        Scanner scanner = new Scanner(System.in);
+        while (true) {
+            System.out.println("\nATM Interface");
+            System.out.println("1. Access Account");
+            System.out.println("2. Quit");
+            System.out.print("Choose an option: ");
+            String choice = scanner.nextLine();
+            if (choice.equals("1")) {
+                System.out.print("Enter your user ID: ");
+                String userId = scanner.nextLine();
+                System.out.print("Enter your pin: ");
+                String pin = scanner.nextLine();
+                Account account = accessAccount(userId, pin);
+                if (account != null) {
+                    while (true) {
+                        System.out.println("\n1. Transaction History");
+                        System.out.println("2. Withdraw");
+                        System.out.println("3. Deposit");
+                        System.out.println("4. Transfer");
+                        System.out.println("5. Quit");
+                        System.out.print("Choose an operation: ");
+                        String operation = scanner.nextLine();
+                        if (operation.equals("1")) {
+                            System.out.println(account.getTransactionHistory());
+                        } else if (operation.equals("2")) {
+                            System.out.print("Enter amount to withdraw: ");
+                            double amount = scanner.nextDouble();
+                            scanner.nextLine(); // Consume newline
+                            System.out.println(account.withdraw(amount));
+                        } else if (operation.equals("3")) {
+                            System.out.print("Enter amount to deposit: ");
+                            double amount = scanner.nextDouble();
+                            scanner.nextLine(); // Consume newline
+                            System.out.println("New balance: " + account.deposit(amount));
+                        } else if (operation.equals("4")) {
+                            System.out.print("Enter target user ID: ");
+                            String targetId = scanner.nextLine();
+                            System.out.print("Enter amount to transfer: ");
+                            double amount = scanner.nextDouble();
+                            scanner.nextLine(); // Consume newline
+                            if (accounts.containsKey(targetId)) {
+                                System.out.println(account.transfer(accounts.get(targetId), amount));
+                            } else {
+                                System.out.println("Target account not found.");
+                            }
+                        } else if (operation.equals("5")) {
+                            break;
+                        } else {
+                            System.out.println("Invalid operation.");
+                        }
+                    }
+                } else {
+                    System.out.println("Invalid user ID or pin.");
+                }
+            } else if (choice.equals("2")) {
+                break;
+            } else {
+                System.out.println("Invalid choice. Please try again.");
+            }
+        }
+        scanner.close();
+    }
+
+    public static void main(String[] args) {
+        ATM atm = new ATM();
+        // Create some accounts for testing (normally this would be handled externally)
+        atm.createAccount("user1", "1234", 1000);
+        atm.createAccount("user2", "5678", 500);
+
+        // Run the ATM interface
+        atm.run();
+    }
+}
